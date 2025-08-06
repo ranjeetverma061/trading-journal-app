@@ -3,6 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
+const fs = require('fs');
 
 const app = express();
 const port = 3001;
@@ -38,6 +39,12 @@ app.use('/uploads', express.static('uploads'));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+}
 
 // Endpoint to get all journal entries
 app.get('/entries', (req, res) => {
