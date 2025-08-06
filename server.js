@@ -36,7 +36,7 @@ app.use('/uploads', express.static('uploads'));
 
 // Serve the HTML file
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'Index Mechanical day protocol.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Endpoint to get all journal entries
