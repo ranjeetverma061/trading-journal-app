@@ -30,7 +30,7 @@ There are two ways to run the application locally:
 Simply double-click the `start.bat` file. This will:
 1.  Start the Node.js server.
 2.  Wait for 3 seconds.
-3.  Automatically open the application in your default web browser at `http://localhost:3001`.
+3.  Automatically open the application in your default web browser at `http://localhost:3007`.
 
 ### Option 2: Manual Start
 
@@ -39,9 +39,9 @@ Simply double-click the `start.bat` file. This will:
     ```bash
     node server.js
     ```
-    You should see the message `Server running at http://localhost:3001`.
+You should see the message `Server running at http://localhost:3007`.
 
 2.  **Open the application:**
-    Open your web browser and navigate to `http://localhost:3001`.
+    Open your web browser and navigate to `http://localhost:3007`.
 
 The application is now running, and you can add, view, and delete your trade journal entries.

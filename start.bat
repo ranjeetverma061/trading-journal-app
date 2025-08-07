@@ -1,7 +1,7 @@
 @echo off
 echo Starting the server...
-start "Trade Journal Server" node server.js
+start "Trade Journal Server" cmd /k "node server.js"
 echo Waiting for server to start...
-timeout /t 3 /nobreak > nul
+timeout /t 5 /nobreak > nul
 echo Opening the application in your browser...
-start http://localhost:3001
+start http://localhost:3007
