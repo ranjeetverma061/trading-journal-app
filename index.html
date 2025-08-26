@@ -1277,13 +1277,17 @@
                              <div class="rules-list">
                                 <h3><i class="fas fa-gavel"></i> Non-Negotiable Rules</h3>
                                 <ul>
-                                    <li><i class="fas fa-binoculars"></i><span>I will focus only on my watchlist of 30 stocks</span></li>
-                                    <li><i class="fas fa-ruler-horizontal"></i><span>I will only trade clean, horizontal range breakouts</span></li>
-                                    <li><i class="fas fa-hourglass-half"></i><span>Patience is my weapon. It's not necessary to get a trade every day</span></li>
-                                    <li><i class="fas fa-volume-up"></i><span>A breakout without volume is a trap</span></li>
-                                    <li><i class="fas fa-robot"></i><span>My entry trigger will be mechanical</span></li>
-                                    <li><i class="fas fa-shield-halved"></i><span>My stop loss is predetermined and absolute</span></li>
-                                    <li><i class="fas fa-crosshairs"></i><span>I will only take one trade per day</span></li>
+                                    <li><i class="fas fa-list-check"></i><span><strong>1️⃣ Focus List Only</strong> – Trade only from my fixed watchlist of 30 stocks.</span></li>
+                                    <li><i class="fas fa-ruler-combined"></i><span><strong>2️⃣ Clean Setups</strong> – Take only clean, horizontal range breakouts.</span></li>
+                                    <li><i class="fas fa-hourglass-half"></i><span><strong>3️⃣ Patience First</strong> – I do not need to trade every day.</span></li>
+                                    <li><i class="fas fa-volume-up"></i><span><strong>4️⃣ Volume Matters</strong> – A breakout without volume is a trap.</span></li>
+                                    <li><i class="fas fa-eject"></i><span><strong>5️⃣ Invalidation Rule</strong> – If the trade premise fails within 1–2 candles after entry (no follow-through or weak volume), exit immediately — even before SL.</span></li>
+                                    <li><i class="fas fa-shoe-prints"></i><span><strong>6️⃣ Two-Step Entry</strong> – Enter only after a candle closes beyond the level and the next candle confirms by breaking its high/low.</span></li>
+                                    <li><i class="fas fa-robot"></i><span><strong>7️⃣ Mechanical Trigger</strong> – Entries are rule-based, never impulsive.</span></li>
+                                    <li><i class="fas fa-shield-halved"></i><span><strong>8️⃣ Absolute Stop Loss</strong> – Predetermined and never moved away from risk.</span></li>
+                                    <li><i class="fas fa-circle-stop"></i><span><strong>9️⃣ One Trade Rule</strong> – Only one trade per day, win or lose.</span></li>
+                                    <li><i class="fas fa-filter"></i><span><strong>1️⃣0️⃣ Environment Filter</strong> – Trade only in A-grade environments (clean, respected S/R; low overlapping candles; small wicks). Ignore C-grade/choppy environments (frequent S/R breaks, heavy overlap, long wicks) even if the setup looks good.</span></li>
+                                    <li><i class="fas fa-lightbulb"></i><span><strong>1️⃣1️⃣ Premise First</strong> – Write your trade premise before entry (why it should work). “SL or Target” applies only while the premise is valid; if new info invalidates it within 1–2 candles, exit per Rule 5.</span></li>
                                 </ul>
                             </div>
                         </div>
@@ -2355,9 +2359,10 @@
 
         async function fetchAndRenderTrades() {
             try {
-                const response = await fetch(`${API_BASE}/entries`);
+                const response = await fetch(`${API_BASE}/api/entries`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
+
                 }
                 const data = await response.json();
                 allTrades = data.entries || [];
@@ -2415,7 +2420,7 @@
                 const tradeId = event.target.dataset.id;
                 if (confirm('Are you sure you want to delete this entry?')) {
                     try {
-                        const response = await fetch(`${API_BASE}/entries/${tradeId}`, {
+                        const response = await fetch(`${API_BASE}/api/entries/${tradeId}`, {
                             method: 'DELETE',
                         });
                         if (!response.ok) {
@@ -2477,7 +2482,7 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE}/add-entry`, {
+                const response = await fetch(`${API_BASE}/api/add-entry`, {
                     method: 'POST',
                     body: formData, // No 'Content-Type' header needed; browser sets it with boundary
                 });

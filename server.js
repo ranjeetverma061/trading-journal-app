@@ -1,12 +1,14 @@
+require('dotenv').config(); // Load environment variables from .env file
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg'); // Use pg for PostgreSQL
 const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
 
 const app = express();
-const port = 3007;
+// Render provides the PORT environment variable
+const port = process.env.PORT || 3007;
 
 app.use(cors());
 
@@ -20,25 +22,40 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Create a new database or open an existing one
-const db = new sqlite3.Database('./database.db', (err) => {
-    if (err) {
-        console.error(err.message);
-    }
-    console.log('Connected to the SQLite database.');
+// PostgreSQL connection pool
+// It will automatically use the DATABASE_URL environment variable
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    // Add SSL for production connections to Render's database
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
-// Create a table to store journal entries
-db.run('CREATE TABLE IF NOT EXISTS entries (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, ticker TEXT, entry REAL, exit REAL, setup TEXT, result TEXT, chartImage TEXT, notes TEXT)');
+// Create a table to store journal entries if it doesn't exist
+const createTable = async () => {
+    const queryText = `
+    CREATE TABLE IF NOT EXISTS entries (
+        id SERIAL PRIMARY KEY,
+        date TEXT,
+        ticker TEXT,
+        entry REAL,
+        exit REAL,
+        setup TEXT,
+        result TEXT,
+        chartImage TEXT,
+        notes TEXT
+    );`;
+    try {
+        await pool.query(queryText);
+        console.log('Table "entries" is ready.');
+    } catch (err) {
+        console.error('Error creating table', err.stack);
+    }
+};
+createTable();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static('uploads'));
-
-// Serve the HTML file
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+app.use(express.static(path.join(__dirname)));
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -47,45 +64,51 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // Endpoint to get all journal entries
-app.get('/entries', (req, res) => {
-    db.all('SELECT * FROM entries ORDER BY date DESC', [], (err, rows) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
+app.get('/api/entries', async (req, res) => {
+    try {
+        const { rows } = await pool.query('SELECT * FROM entries ORDER BY date DESC');
         res.json({ entries: rows });
-    });
+    } catch (err) {
+        console.error(err.stack);
+        res.status(500).json({ error: 'Database error' });
+    }
 });
 
 // Endpoint to add a new journal entry
-app.post('/add-entry', upload.single('chartImage'), (req, res) => {
+app.post('/api/add-entry', upload.single('chartImage'), async (req, res) => {
     const { date, ticker, entry, exit, setup, result, notes } = req.body;
     const chartImage = req.file ? `/uploads/${req.file.filename}` : null;
+    const queryText = 'INSERT INTO entries (date, ticker, entry, exit, setup, result, chartImage, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id';
+    const values = [date, ticker, entry, exit, setup, result, chartImage, notes];
 
-    db.run('INSERT INTO entries (date, ticker, entry, exit, setup, result, chartImage, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
-        [date, ticker, entry, exit, setup, result, chartImage, notes], 
-        function(err) {
-            if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-            }
-            res.json({ id: this.lastID });
-        }
-    );
+    try {
+        const result = await pool.query(queryText, values);
+        res.json({ id: result.rows[0].id });
+    } catch (err) {
+        console.error(err.stack);
+        res.status(500).json({ error: 'Database error' });
+    }
 });
 
 // Endpoint to delete a journal entry
-app.delete('/entries/:id', (req, res) => {
+app.delete('/api/entries/:id', async (req, res) => {
     const { id } = req.params;
-    db.run('DELETE FROM entries WHERE id = ?', id, function(err) {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        res.json({ message: 'Deleted successfully', changes: this.changes });
-    });
+    const queryText = 'DELETE FROM entries WHERE id = $1';
+    try {
+        const result = await pool.query(queryText, [id]);
+        res.json({ message: 'Deleted successfully', changes: result.rowCount });
+    } catch (err) {
+        console.error(err.stack);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// All other GET requests not handled before will return the app
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(port, () => {
+    console.log('Connected to the database.');
     console.log(`Server running at http://localhost:${port}`);
 });
