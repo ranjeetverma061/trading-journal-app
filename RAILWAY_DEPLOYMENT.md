@@ -38,6 +38,13 @@ After connecting your repository, Railway will automatically detect the project 
 2. Visit this URL to ensure your trading journal app is running
 3. Test the functionality by adding, viewing, and deleting entries
 
+### 5. Share Your Application
+
+1. After deployment, Railway provides a shareable URL for your application
+2. This URL can be found in your Railway project dashboard
+3. You can share this URL with others to access your trading journal app
+4. The URL will look something like: `https://your-project-name.railway.app`
+
 ## Important Notes
 
 - The application uses PostgreSQL, so make sure your DATABASE_URL is properly configured
