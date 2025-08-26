@@ -81,6 +81,7 @@ app.get('*', (req, res) => {
 
 const startServer = async () => {
     try {
+        console.log(`DEBUG: DATABASE_URL is: ${process.env.DATABASE_URL}`);
         pool = new Pool({
             connectionString: process.env.DATABASE_URL,
             ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost")
