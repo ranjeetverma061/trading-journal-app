@@ -2349,7 +2349,7 @@
         }
 
         // --- Journal and Local Server Logic ---
-        const API_BASE = 'http://localhost:3007';
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3007' : '';
         let allTrades = []; // Store trades globally for analysis
         const journalForm = document.getElementById('journalForm');
         const journalTableBody = document.querySelector('#journal-entries-table tbody');
