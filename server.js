@@ -22,38 +22,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// PostgreSQL connection pool
-// It will automatically use the DATABASE_URL environment variable
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    // Add SSL for production connections to Railway's database, but not for local connections
-    ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost")
-        ? { rejectUnauthorized: false }
-        : false,
-});
-
-// Create a table to store journal entries if it doesn't exist
-const createTable = async () => {
-    const queryText = `
-    CREATE TABLE IF NOT EXISTS entries (
-        id SERIAL PRIMARY KEY,
-        date TEXT,
-        ticker TEXT,
-        entry REAL,
-        exit REAL,
-        setup TEXT,
-        result TEXT,
-        chartImage TEXT,
-        notes TEXT
-    );`;
-    try {
-        await pool.query(queryText);
-        console.log('Table "entries" is ready.');
-    } catch (err) {
-        console.error('Error creating table', err.stack);
-    }
-};
-createTable();
+let pool;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -110,7 +79,43 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(port, () => {
-    console.log('Connected to the database.');
-    console.log(`Server running at http://localhost:${port}`);
-});
+const startServer = async () => {
+    try {
+        pool = new Pool({
+            connectionString: process.env.DATABASE_URL,
+            ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost")
+                ? { rejectUnauthorized: false }
+                : false,
+        });
+
+        // Test the connection
+        await pool.query('SELECT NOW()');
+        console.log('Database connected successfully.');
+
+        // Create table if it doesn't exist
+        const createTableQuery = `
+        CREATE TABLE IF NOT EXISTS entries (
+            id SERIAL PRIMARY KEY,
+            date TEXT,
+            ticker TEXT,
+            entry REAL,
+            exit REAL,
+            setup TEXT,
+            result TEXT,
+            chartImage TEXT,
+            notes TEXT
+        );`;
+        await pool.query(createTableQuery);
+        console.log('Table "entries" is ready.');
+
+        app.listen(port, () => {
+            console.log(`Server running at http://localhost:${port}`);
+        });
+
+    } catch (err) {
+        console.error('Failed to start server:', err);
+        process.exit(1);
+    }
+};
+
+startServer();
