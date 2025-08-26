@@ -79,19 +79,35 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+const connectWithRetry = async (retries = 5) => {
+    while (retries) {
+        try {
+            pool = new Pool({
+                connectionString: process.env.DATABASE_URL,
+                ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost")
+                    ? { rejectUnauthorized: false }
+                    : false,
+            });
+            // Test the connection
+            await pool.query('SELECT NOW()');
+            console.log('Database connected successfully.');
+            return; // Success! Exit the function.
+        } catch (err) {
+            retries -= 1;
+            console.error(`Failed to connect to database. Retries left: ${retries}`);
+            if (retries === 0) {
+                console.error('Could not connect to database after multiple retries.');
+                throw err; // Throw error after last retry to be caught by startServer
+            }
+            // Wait 5 seconds before the next retry
+            await new Promise(res => setTimeout(res, 5000));
+        }
+    }
+};
+
 const startServer = async () => {
     try {
-        console.log(`DEBUG: DATABASE_URL is: ${process.env.DATABASE_URL}`);
-        pool = new Pool({
-            connectionString: process.env.DATABASE_URL,
-            ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost")
-                ? { rejectUnauthorized: false }
-                : false,
-        });
-
-        // Test the connection
-        await pool.query('SELECT NOW()');
-        console.log('Database connected successfully.');
+        await connectWithRetry();
 
         // Create table if it doesn't exist
         const createTableQuery = `
@@ -114,7 +130,7 @@ const startServer = async () => {
         });
 
     } catch (err) {
-        console.error('Failed to start server:', err);
+        console.error('Server failed to start:', err.message);
         process.exit(1);
     }
 };
