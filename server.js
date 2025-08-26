@@ -26,8 +26,10 @@ const upload = multer({ storage: storage });
 // It will automatically use the DATABASE_URL environment variable
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    // Add SSL for production connections to Render's database
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    // Add SSL for production connections to Railway's database, but not for local connections
+    ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("localhost")
+        ? { rejectUnauthorized: false }
+        : false,
 });
 
 // Create a table to store journal entries if it doesn't exist
