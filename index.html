@@ -1260,6 +1260,15 @@
                             </button>
                         </li>
                     </ul>
+                    <div class="sidebar-heading">Wellness</div>
+                    <ul class="phase-filter">
+                        <li>
+                            <a href="PranaPulse.html" class="phase-filter-btn" style="text-decoration: none;">
+                                <i class="fas fa-heartbeat"></i>
+                                PranaPulse App
+                            </a>
+                        </li>
+                    </ul>
                 </nav>
             </div>
 
@@ -2349,7 +2358,7 @@
         }
 
         // --- Journal and Local Server Logic ---
-        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3007' : '';
+        const API_BASE = 'http://localhost:3007';
         let allTrades = []; // Store trades globally for analysis
         const journalForm = document.getElementById('journalForm');
         const journalTableBody = document.querySelector('#journal-entries-table tbody');
