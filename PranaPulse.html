@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PranaPulse - Your Wellness Coach</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+        }
+        #app-container {
+            background-color: #f0f4f8;
+        }
+        .hidden {
+            display: none;
+        }
+        .screen {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .toast {
+            animation: slideUp 0.5s ease-out forwards;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 2px; }
+        .nav-btn.active svg { color: #0ea5e9; }
+        .nav-btn.active span { color: #0c4a6e; }
+        .phase-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .phase-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 122, 255, 0.1);
+        }
+        .fab {
+            box-shadow: 0 4px S15px rgba(14, 165, 233, 0.4);
+        }
+        .journal-entry-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        /* Style for breathing animation */
+        #session-exercise-icon svg {
+            transition: transform 1.5s ease-in-out;
+        }
+        @keyframes spin {
+            from { transform: rotate(-90deg); }
+            to { transform: rotate(270deg); }
+        }
+        .animate-stopwatch-spinner {
+            animation: spin 2s linear infinite;
+        }
+        .calendar-day-dot {
+            height: 6px;
+            width: 6px;
+            background-color: #f59e0b;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body class="bg-slate-100">
+
+    <!-- Main Application Container -->
+    <div id="app-container" class="max-w-md mx-auto min-h-screen shadow-lg">
+
+        <!-- ===== DASHBOARD SCREEN ===== -->
+        <div id="dashboard-screen" class="screen p-6 pb-24">
+            <header class="mb-6">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-3xl font-bold text-sky-900">Dashboard</h1>
+                    <div class="flex items-center space-x-4">
+                        <a href="index.html" class="text-sky-500 hover:text-sky-700" aria-label="Open Trading Protocol">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </a>
+                        <button id="open-rules-btn" class="text-sky-500 hover:text-sky-700" aria-label="Open safety rules">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <p class="text-slate-500">Your daily wellness hub.</p>
+            </header>
+            
+            <div id="daily-status-card" class="mb-6 bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex items-center space-x-4">
+                 <div id="daily-status-icon" class="w-12 h-12 rounded-full flex items-center justify-center bg-slate-100 text-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                 </div>
+                 <div>
+                    <p id="daily-status-text" class="font-semibold text-sky-900">Ready for your session!</p>
+                    <p id="daily-status-subtext" class="text-sm text-slate-500">Let's get started today.</p>
+                 </div>
+            </div>
+
+            <div id="motivational-quote-container" class="mb-6 bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                <p id="quote-text" class="text-slate-700 italic text-center">"Loading quote..."</p>
+                <p id="quote-author" class="text-slate-500 text-sm text-right mt-2"></p>
+            </div>
+
+            <div id="aqi-warning" class="hidden flex items-center p-3 mb-4 bg-amber-100 border-l-4 border-amber-500 text-amber-800 rounded-r-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <div>
+                    <p class="font-bold">Air Quality Alert</p>
+                    <p id="aqi-message" class="text-sm">Poor air quality detected. Consider indoor activities.</p>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <div id="phase-selection-container" class="grid grid-cols-2 gap-4">
+                    <!-- Phase cards will be dynamically inserted here -->
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                 <h2 class="text-lg font-semibold text-sky-900 mb-3">Latest Journal Entry</h2>
+                 <div id="latest-journal-card" class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 cursor-pointer">
+                    <p class="text-slate-400 italic">No journal entries yet. Tap to add one!</p>
+                 </div>
+            </div>
+        </div>
+        
+        <!-- ===== GYM SCREEN ===== -->
+        <div id="gym-screen" class="screen p-6 pb-24 hidden">
+            <header class="mb-6">
+                 <h1 class="text-3xl font-bold text-sky-900">Home Gym Plan</h1>
+                 <p class="text-slate-500">A full-body plan for getting in shape.</p>
+            </header>
+            <div id="gym-plan-container" class="space-y-6">
+                <!-- Gym day cards will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- ===== GUIDED SESSION SCREEN ===== -->
+        <div id="session-screen" class="screen p-4 bg-sky-800 text-white min-h-screen flex flex-col justify-between hidden">
+            <div class="text-center">
+                <p id="session-phase-title" class="text-sky-200 font-semibold"></p>
+                <h2 id="session-exercise-name" class="text-3xl font-bold mt-1 mb-4"></h2>
+            </div>
+             <div class="flex-grow flex flex-col items-center justify-center space-y-8">
+                 <div id="session-exercise-icon" class="w-32 h-32 text-sky-300">
+                    <!-- Animated icon will be injected here -->
+                </div>
+                 <div class="relative w-64 h-64">
+                    <svg class="w-full h-full" viewBox="0 0 100 100">
+                        <circle class="text-sky-700" stroke-width="8" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
+                        <circle id="timer-progress-circle" class="text-sky-300" stroke-width="8" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" stroke-dasharray="283" stroke-dashoffset="283" transform="rotate(-90 50 50)" />
+                    </svg>
+                    <div id="session-timer" class="absolute inset-0 flex items-center justify-center text-5xl font-bold">00:00</div>
+                </div>
+            </div>
+            <div class="text-center mb-6 h-10 flex items-center justify-center">
+                <p id="session-instructions" class="text-sky-100 text-xl font-semibold"></p>
+            </div>
+            <div class="flex items-center justify-center space-x-4">
+                <button id="pause-session-btn" class="bg-sky-700 hover:bg-sky-600 text-white font-bold py-3 px-8 rounded-full transition">Pause</button>
+                <button id="end-session-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-full transition">End</button>
+            </div>
+        </div>
+
+        <!-- ===== JOURNAL SCREEN ===== -->
+        <div id="journal-screen" class="screen p-6 pb-24 hidden">
+             <h1 class="text-3xl font-bold text-sky-900 mb-4">Wellness Journal</h1>
+             <div id="journal-entries-container" class="space-y-4">
+                <p class="text-center text-slate-500 mt-8">Your journal is empty. Tap the '+' button to add your first entry.</p>
+             </div>
+             <button id="add-journal-entry-btn" class="fab fixed bottom-20 right-8 bg-sky-500 hover:bg-sky-600 text-white w-14 h-14 rounded-full flex items-center justify-center transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+             </button>
+        </div>
+
+        <!-- ===== PROGRESS SCREEN ===== -->
+        <div id="progress-screen" class="screen p-6 pb-24 hidden">
+            <h1 class="text-3xl font-bold text-sky-900 mb-6">Your Progress</h1>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                    <p class="text-sm text-slate-500">Total Sessions</p>
+                    <p id="stats-total-sessions" class="text-2xl font-bold text-sky-900">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                    <p class="text-sm text-slate-500">Current Streak</p>
+                    <p id="stats-streak" class="text-2xl font-bold text-sky-900">0 days</p>
+                </div>
+            </div>
+            <div id="progress-content">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6">
+                     <h3 class="font-semibold mb-2 text-sky-900">Workout Calendar</h3>
+                     <div id="calendar"></div>
+                </div>
+                 <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                     <h3 class="font-semibold mb-2 text-sky-900">Session Duration Trend</h3>
+                     <canvas id="duration-chart"></canvas>
+                 </div>
+            </div>
+            <div id="progress-empty-state" class="hidden text-center py-10">
+                <p class="text-slate-500">Complete a session to start tracking your progress!</p>
+            </div>
+        </div>
+
+        <!-- ===== ANALYSIS SCREEN ===== -->
+        <div id="analysis-screen" class="screen p-6 pb-24 hidden">
+            <h1 class="text-3xl font-bold text-sky-900 mb-6">Your Analysis</h1>
+            <div id="analysis-content" class="space-y-6">
+                <!-- Weekly Consistency Card -->
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="font-semibold mb-2 text-sky-900">Weekly Consistency</h3>
+                    <p class="text-sm text-slate-500 mb-3">Your workout frequency over the last 7 days.</p>
+                    <canvas id="consistency-chart"></canvas>
+                </div>
+                <!-- Feedback Distribution Card -->
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="font-semibold mb-2 text-sky-900">Session Feedback</h3>
+                    <p class="text-sm text-slate-500 mb-3">How you've felt after your sessions.</p>
+                    <div class="max-w-xs mx-auto">
+                        <canvas id="feedback-chart"></canvas>
+                    </div>
+                </div>
+                 <!-- Journal Insight Card -->
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="font-semibold mb-2 text-sky-900">Journal Insights</h3>
+                    <p class="text-sm text-slate-500 mb-3">Correlation between session feedback and journal entries on the same day.</p>
+                     <canvas id="journal-insight-chart"></canvas>
+                </div>
+                <!-- Workout Times Card -->
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="font-semibold mb-2 text-sky-900">Preferred Workout Times</h3>
+                    <p class="text-sm text-slate-500 mb-3">When you're most active.</p>
+                    <canvas id="time-chart"></canvas>
+                </div>
+                <!-- Top Exercises Card -->
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="font-semibold mb-2 text-sky-900">Most Frequent Activities</h3>
+                    <ul id="top-exercises-list" class="space-y-2 mt-3 text-slate-700">
+                        <!-- JS will populate this -->
+                    </ul>
+                </div>
+            </div>
+            <div id="analysis-empty-state" class="hidden text-center py-10">
+                <p class="text-slate-500">Complete a few more sessions and add journal entries to unlock your analysis.</p>
+            </div>
+        </div>
+
+        <!-- ===== MODALS & TOASTS ===== -->
+        <div id="feedback-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg p-8 w-full max-w-sm text-center screen">
+                <h2 class="text-xl font-bold mb-4">Set Complete!</h2>
+                <p class="text-slate-600 mb-6">How did you feel during that set?</p>
+                <div class="space-y-3">
+                    <button class="feedback-option w-full bg-emerald-100 text-emerald-800 font-semibold py-3 rounded-lg border border-emerald-200 hover:bg-emerald-200" data-feedback="great">Great</button>
+                    <button class="feedback-option w-full bg-amber-100 text-amber-800 font-semibold py-3 rounded-lg border border-amber-200 hover:bg-amber-200" data-feedback="tired">A little tired</button>
+                    <button class="feedback-option w-full bg-rose-100 text-rose-800 font-semibold py-3 rounded-lg border border-rose-200 hover:bg-rose-200" data-feedback="breathless">Slightly breathless</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="journal-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+             <div class="bg-white rounded-lg p-6 w-full max-w-sm screen">
+                <h2 id="journal-modal-title" class="text-xl font-bold mb-4 text-sky-900">New Journal Entry</h2>
+                <form id="journal-form">
+                    <input type="hidden" id="journal-entry-id">
+                    <textarea id="journal-entry-content" rows="8" class="w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-sky-400 focus:outline-none" placeholder="How are you feeling today? Any symptoms, triggers, or wins to note?"></textarea>
+                    <div class="mt-4 flex justify-end space-x-2">
+                        <button type="button" id="cancel-journal-btn" class="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600">Save</button>
+                    </div>
+                </form>
+             </div>
+        </div>
+        
+        <div id="rules-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg p-6 w-full max-w-sm screen">
+                <h2 class="text-xl font-bold mb-4 text-sky-900">Non-Negotiable Rules</h2>
+                <ul class="space-y-3 text-slate-600 text-left">
+                    <li class="flex items-start"><span class="mr-2 text-sky-500 font-bold">1.</span><span><strong>Listen to Your Body:</strong> Stop immediately if you feel sharp pain, dizziness, or severe discomfort.</span></li>
+                    <li class="flex items-start"><span class="mr-2 text-sky-500 font-bold">2.</span><span><strong>Never Push Breathlessness:</strong> If you feel breathless, pause the session and rest. Your health comes first.</span></li>
+                    <li class="flex items-start"><span class="mr-2 text-sky-500 font-bold">3.</span><span><strong>Inhaler Ready:</strong> Always keep your rescue inhaler within reach during every session.</span></li>
+                    <li class="flex items-start"><span class="mr-2 text-sky-500 font-bold">4.</span><span><strong>Consistency Over Intensity:</strong> Gentle, regular practice is safer and more effective than occasional, intense workouts.</span></li>
+                     <li class="flex items-start"><span class="mr-2 text-sky-500 font-bold">5.</span><span><strong>Consult Your Doctor:</strong> This app is a guide, not a medical professional. Please consult your doctor before starting.</span></li>
+                </ul>
+                <div class="mt-6 flex justify-end">
+                    <button id="close-rules-btn" class="px-6 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600">Got it</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="toast-container" class="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-md p-4 z-50 hidden">
+             <div class="toast bg-sky-800 text-white p-4 rounded-lg shadow-lg flex justify-between items-center">
+                <div>
+                    <p class="font-bold">Great session!</p>
+                    <p class="text-sm">Care to add a journal entry?</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button id="toast-journal-yes" class="bg-sky-600 text-white px-3 py-1 text-sm rounded-md">Yes</button>
+                    <button id="toast-journal-no" class="bg-transparent text-white px-3 py-1 text-sm rounded-md">No</button>
+                </div>
+             </div>
+        </div>
+
+
+        <!-- ===== BOTTOM NAVIGATION BAR ===== -->
+        <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/80 backdrop-blur-sm border-t border-slate-200 flex justify-around shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+            <button class="nav-btn p-3 flex-1 text-center text-slate-500 active" data-screen="dashboard-screen">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                <span class="text-xs font-medium">Home</span>
+            </button>
+             <button class="nav-btn p-3 flex-1 text-center text-slate-500" data-screen="gym-screen">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span class="text-xs font-medium">Gym</span>
+            </button>
+            <button class="nav-btn p-3 flex-1 text-center text-slate-500" data-screen="journal-screen">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                <span class="text-xs font-medium">Journal</span>
+            </button>
+             <button class="nav-btn p-3 flex-1 text-center text-slate-500" data-screen="progress-screen">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                <span class="text-xs font-medium">Progress</span>
+            </button>
+            <button class="nav-btn p-3 flex-1 text-center text-slate-500" data-screen="analysis-screen">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span class="text-xs font-medium">Analysis</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- DOM ELEMENTS ---
+        const allScreens = document.querySelectorAll('.screen');
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const phaseSelectionContainer = document.getElementById('phase-selection-container');
+        const gymPlanContainer = document.getElementById('gym-plan-container');
+        const sessionInstructions = document.getElementById('session-instructions');
+        const sessionIconContainer = document.getElementById('session-exercise-icon');
+        const timerProgressCircle = document.getElementById('timer-progress-circle');
+        const feedbackModal = document.getElementById('feedback-modal');
+        const journalModal = document.getElementById('journal-modal');
+        const rulesModal = document.getElementById('rules-modal');
+        const journalForm = document.getElementById('journal-form');
+        const toastContainer = document.getElementById('toast-container');
+        
+        // --- APP STATE ---
+        let appState = {};
+        let sessionTimer, breathingCycleTimeoutId;
+        const defaultState = {
+            user: { stage: 'beginner' },
+            progress: { history: [] },
+            journal: [],
+            quoteOfTheDay: { index: 0, date: '' },
+            currentSession: {},
+        };
+
+        // --- DATA & CONTENT ---
+        // ... (data content remains the same)
+        const motivationalQuotes = [
+            { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+            { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+            { text: "Well-being is realized by small steps, but is truly no small thing.", author: "Zeno" },
+            { text: "The first wealth is health.", author: "Ralph Waldo Emerson" },
+            { text: "Take care of your body. It's the only place you have to live.", author: "Jim Rohn" },
+            { text: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu" }
+        ];
+        const breathingIcon = `<circle cx="12" cy="12" r="10" fill="currentColor" />`;
+        const progressionMap = {
+            beginner: {
+                name: 'Beginner',
+                plan: [
+                    // Mobility & Warmups
+                    { name: 'Foot Warm-up', category: 'Mobility & Warm-ups', type: 'countdown', exercise: 'Ankle Rotations', duration: 180, icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M15.964 5.964a2 2 0 012.828 0l2.828 2.828a2 2 0 010 2.828l-2.828 2.828a2 2 0 01-2.828 0L13.136 11.5a2 2 0 010-2.828l2.828-2.828z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9 21v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6" />' },
+                    { name: 'Body Warm-up', category: 'Mobility & Warm-ups', type: 'countdown', exercise: 'Arm Circles', duration: 180, icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5" /> <path stroke-linecap="round" stroke-linejoin="round" d="M20 20v-5h-5" />' },
+                    { name: 'Cool-down', category: 'Mobility & Warm-ups', type: 'countdown', exercise: 'Gentle Stretching', duration: 540, icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />' },
+                    { name: 'Yogic Sleep', category: 'Mobility & Warm-ups', type: 'countdown', exercise: 'Yoga Nidra', duration: 360, icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />' },
+                    // Breathing
+                    { name: '4-7-8 Breathing', category: 'Breathing', type: 'breathing', exercise: '4-7-8 Breathing', duration: 240, icon: breathingIcon, pattern: [{ phase: 'Inhale', duration: 4 }, { phase: 'Hold', duration: 7 }, { phase: 'Exhale', duration: 8 }] },
+                    { name: 'Forceful Exhalation', category: 'Breathing', type: 'breathing', exercise: 'Kapalbhati', duration: 300, icon: breathingIcon, pattern: [{ phase: 'Exhale', duration: 1 }, { phase: 'Inhale', duration: 2 }] },
+                    { name: 'Alternate Nostril', category: 'Breathing', type: 'breathing', exercise: 'Anulom Vilom', duration: 360, icon: breathingIcon, pattern: [{ phase: 'Inhale Left', duration: 4 }, { phase: 'Hold', duration: 4 }, { phase: 'Exhale Right', duration: 8 }, { phase: 'Inhale Right', duration: 4 }, { phase: 'Hold', duration: 4 }, { phase: 'Exhale Left', duration: 8 }] },
+                    { name: 'Bellows Breath', category: 'Breathing', type: 'breathing', exercise: 'Bhastrika', duration: 180, icon: breathingIcon, pattern: [{ phase: 'Inhale', duration: 1 }, { phase: 'Exhale', duration: 1 }] },
+                    // Gym
+                    { name: 'Full Body Workout A', category: 'Gym', type: 'stopwatch_container',
+                        details: [
+                            { exerciseName: 'Goblet Squats', sets: '3', reps: '8-12', type: 'stopwatch' },
+                            { exerciseName: 'Dumbbell Rows', sets: '3', reps: '8-12 per side', type: 'stopwatch' },
+                            { exerciseName: 'Push-ups (or Knee Push-ups)', sets: '3', reps: 'To failure', type: 'stopwatch' },
+                            { exerciseName: 'Bicep Curls', sets: '2', reps: '10-15 per side', type: 'stopwatch' }
+                        ]
+                    },
+                    { name: 'Full Body Workout B', category: 'Gym', type: 'stopwatch_container',
+                        details: [
+                            { exerciseName: 'Dumbbell Lunges', sets: '3', reps: '10-12 per side', type: 'stopwatch' },
+                            { exerciseName: 'Overhead Press (Seated)', sets: '3', reps: '8-12', type: 'stopwatch' },
+                            { exerciseName: 'Ab Rollouts (from knees)', sets: '3', reps: '8-12', type: 'stopwatch' },
+                            { exerciseName: 'Plank', sets: '3', reps: '30-45 sec', type: 'stopwatch' }
+                        ]
+                    },
+                    { name: 'Cardio & Flexibility', category: 'Gym', type: 'stopwatch_container',
+                        details: [
+                            { exerciseName: 'Jumping Jacks (or Marching)', sets: '1', reps: '5 min', type: 'countdown', duration: 300 },
+                            { exerciseName: 'Cat-Cow Stretch', sets: '2', reps: '10 cycles', type: 'stopwatch' },
+                            { exerciseName: 'Hamstring Stretch', sets: '2', reps: '30 sec per side', type: 'stopwatch' },
+                            { exerciseName: 'Glute Bridges', sets: '3', reps: '15', type: 'stopwatch' }
+                        ]
+                    },
+                ]
+            },
+        };
+        const synth = window.speechSynthesis;
+
+        // --- CORE FUNCTIONS ---
+        const loadState = () => {
+            const savedState = localStorage.getItem('pranaPulseState');
+            appState = savedState ? JSON.parse(savedState) : JSON.parse(JSON.stringify(defaultState));
+        };
+        const saveState = () => localStorage.setItem('pranaPulseState', JSON.stringify(appState));
+        const speak = (text) => {
+            if (synth.speaking) synth.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.9;
+            synth.speak(utterance);
+        };
+        const showScreen = (screenId) => {
+            allScreens.forEach(s => s.classList.add('hidden'));
+            document.getElementById(screenId)?.classList.remove('hidden');
+            navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screenId));
+            const fab = document.getElementById('add-journal-entry-btn');
+            if (fab) fab.classList.toggle('hidden', screenId !== 'journal-screen');
+        };
+
+        const navigateAndRender = (screenId) => {
+            showScreen(screenId);
+            if (screenId === 'progress-screen') renderProgressScreen();
+            else if (screenId === 'journal-screen') renderJournalScreen();
+            else if (screenId === 'dashboard-screen') setupDashboard();
+            else if (screenId === 'analysis-screen') renderAnalysisScreen();
+            else if (screenId === 'gym-screen') setupGymScreen();
+        };
+
+        // --- DASHBOARD & GYM SCREEN SETUP ---
+        const setupDashboard = () => {
+            const allExercises = progressionMap[appState.user.stage].plan;
+            phaseSelectionContainer.innerHTML = ''; 
+
+            const categories = {
+                "Breathing Exercises": allExercises.filter(p => p.category === 'Breathing'),
+                "Mobility & Warm-ups": allExercises.filter(p => p.category === 'Mobility & Warm-ups'),
+            };
+
+            for (const [categoryName, exercises] of Object.entries(categories)) {
+                if (exercises.length > 0) {
+                    const header = document.createElement('h2');
+                    header.className = 'text-lg font-semibold text-sky-900 my-3 col-span-2';
+                    header.textContent = categoryName;
+                    phaseSelectionContainer.appendChild(header);
+
+                    exercises.forEach(phase => {
+                        const phaseIndex = allExercises.findIndex(p => p.name === phase.name);
+                        const duration = Math.round(phase.duration / 60);
+                        const card = document.createElement('button');
+                        card.className = 'phase-card p-4 rounded-xl shadow-sm border border-slate-200 text-left';
+                        card.dataset.phaseIndex = phaseIndex;
+                        card.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-sky-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${phase.icon}</svg>
+                            <h3 class="font-semibold text-sky-900">${phase.name}</h3>
+                            <p class="text-sm text-slate-500">${duration} min</p>
+                        `;
+                        phaseSelectionContainer.appendChild(card);
+                    });
+                }
+            }
+            
+            updateDailyStatus();
+            renderLatestJournal();
+            updateMotivationalQuote();
+            fetchAQI();
+        };
+
+        const setupGymScreen = () => {
+            gymPlanContainer.innerHTML = ''; 
+            const gymWorkouts = progressionMap.beginner.plan.filter(p => p.category === 'Gym');
+
+            gymWorkouts.forEach(workout => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded-lg shadow-sm border border-slate-200';
+                
+                let detailsHtml = '<ul class="space-y-2 mt-3 text-slate-600">';
+                workout.details.forEach(detail => {
+                    const individualExercise = { ...detail, name: detail.exerciseName, parentName: workout.name, icon: workout.icon || breathingIcon, category: 'Gym' };
+                    detailsHtml += `
+                        <li class="flex justify-between items-center">
+                            <div>
+                                <span>${detail.exerciseName}</span>
+                                <span class="block text-xs text-slate-400">${detail.sets} x ${detail.reps}</span>
+                            </div>
+                            <button data-exercise='${JSON.stringify(individualExercise)}' class="start-exercise-btn bg-sky-100 text-sky-700 text-xs font-bold py-1 px-3 rounded-full hover:bg-sky-200 transition">
+                                START
+                            </button>
+                        </li>
+                    `;
+                });
+                detailsHtml += '</ul>';
+
+                let noteHtml = '<p class="text-xs text-slate-400 italic mt-3">Choose a weight that is challenging but allows good form. Rest 60-90 seconds between sets.</p>';
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-lg font-bold text-sky-900">${workout.name}</h3>
+                        </div>
+                    </div>
+                    ${detailsHtml}
+                    ${noteHtml}
+                `;
+                gymPlanContainer.appendChild(card);
+            });
+        };
+        
+        const getDayOfYear = (date = new Date()) => Math.floor((date - new Date(date.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+
+        const updateMotivationalQuote = () => {
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (appState.quoteOfTheDay?.date !== todayStr) {
+                const dayOfYear = getDayOfYear();
+                const newIndex = dayOfYear % motivationalQuotes.length;
+                appState.quoteOfTheDay = { index: newIndex, date: todayStr };
+                saveState();
+            }
+            const quote = motivationalQuotes[appState.quoteOfTheDay.index];
+            document.getElementById('quote-text').textContent = `"${quote.text}"`;
+            document.getElementById('quote-author').textContent = `- ${quote.author}`;
+        };
+
+        const updateDailyStatus = () => {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const workoutToday = appState.progress.history.some(h => h.date.startsWith(todayStr));
+            const iconEl = document.getElementById('daily-status-icon');
+            const textEl = document.getElementById('daily-status-text');
+            const subtextEl = document.getElementById('daily-status-subtext');
+
+            if (workoutToday) {
+                iconEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+                iconEl.className = "w-12 h-12 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-600";
+                textEl.textContent = "Workout Complete!";
+                subtextEl.textContent = "Great job staying consistent.";
+            } else {
+                 iconEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>`;
+                 iconEl.className = "w-12 h-12 rounded-full flex items-center justify-center bg-slate-100 text-slate-500";
+                 textEl.textContent = "Ready for your session!";
+                 subtextEl.textContent = "Let's get started today.";
+            }
+        };
+
+        const renderLatestJournal = () => {
+            const card = document.getElementById('latest-journal-card');
+            const todayStr = new Date().toISOString().split('T')[0];
+            const workoutToday = appState.progress.history.some(h => h.date.startsWith(todayStr));
+
+            if (appState.journal.length > 0 && new Date(appState.journal[0].id).toISOString().startsWith(todayStr)) {
+                const latestEntry = appState.journal[0];
+                card.innerHTML = `
+                    <p class="font-semibold text-sky-900 mb-1">Today's Entry</p>
+                    <p class="text-slate-600 text-sm truncate">${latestEntry.content}</p>
+                `;
+                 card.onclick = () => showJournalEntry(latestEntry.id);
+            } else if (workoutToday) {
+                 card.innerHTML = `<p class="text-sky-700 font-semibold">How did your workout feel? Tap to add a journal entry.</p>`;
+                 card.onclick = () => openJournalModal(null, "Reflecting on my workout...");
+            } else {
+                 card.innerHTML = `<p class="text-slate-400 italic">How are you feeling today? Tap to add an entry.</p>`;
+                 card.onclick = () => openJournalModal();
+            }
+        };
+
+        async function fetchAQI() {
+            if (Math.random() > 0.8) document.getElementById('aqi-warning').classList.remove('hidden');
+        }
+        
+        // --- JOURNAL & MODALS ---
+        const renderJournalScreen = () => {
+            const container = document.getElementById('journal-entries-container');
+            container.innerHTML = (appState.journal.length === 0) ? `<p class="text-center text-slate-500 mt-8">Your journal is empty.</p>` : '';
+            appState.journal.forEach(entry => {
+                const entryEl = document.createElement('div');
+                entryEl.className = 'bg-white p-4 rounded-lg shadow-sm border border-slate-200 cursor-pointer';
+                entryEl.onclick = () => openJournalModal(entry.id);
+                entryEl.innerHTML = `
+                    <p class="font-semibold text-sky-900 mb-1">${new Date(entry.id).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
+                    <p class="text-slate-600 text-sm truncate">${entry.content}</p>
+                `;
+                container.appendChild(entryEl);
+            });
+        };
+        const openJournalModal = (entryId = null, prefill = "") => {
+            journalForm.reset();
+            const entry = entryId ? appState.journal.find(e => e.id === entryId) : null;
+            document.getElementById('journal-modal-title').textContent = entry ? 'Edit Entry' : 'New Journal Entry';
+            document.getElementById('journal-entry-id').value = entry ? entry.id : '';
+            document.getElementById('journal-entry-content').value = entry ? entry.content : prefill;
+            journalModal.classList.remove('hidden');
+        };
+        const showJournalEntry = (entryId) => openJournalModal(entryId);
+        const handleJournalSubmit = (e) => {
+            e.preventDefault();
+            const content = document.getElementById('journal-entry-content').value.trim();
+            const entryId = document.getElementById('journal-entry-id').value;
+            if (!content) return;
+            if (entryId) {
+                const index = appState.journal.findIndex(e => e.id == entryId);
+                if (index > -1) appState.journal[index].content = content;
+            } else {
+                appState.journal.unshift({ id: Date.now(), content });
+            }
+            saveState();
+            renderJournalScreen();
+            renderLatestJournal();
+            journalModal.classList.add('hidden');
+        };
+
+        const showJournalToast = () => {
+            toastContainer.classList.remove('hidden');
+            setTimeout(() => {
+                toastContainer.classList.add('hidden');
+            }, 5000);
+        };
+
+        // --- SESSION LOGIC ---
+        const startSession = (phase) => {
+            const now = Date.now();
+            appState.currentSession = {
+                isActive: true, isPaused: false, phase,
+                startTime: now, pauseTime: 0, elapsedPauseTime: 0,
+                timeLeft: phase.duration,
+            };
+            if (phase.type === 'countdown' || phase.type === 'breathing') {
+                appState.currentSession.endTime = now + phase.duration * 1000;
+            }
+            showScreen('session-screen');
+            updateSessionUI();
+            sessionTimer = setInterval(tick, 250);
+            speak(`Starting ${phase.name}.`);
+            if (phase.type === 'breathing') startBreathingCycle(phase.pattern);
+            else if (phase.type === 'stopwatch') sessionInstructions.textContent = "Tap 'End' when your set is complete.";
+            else sessionInstructions.textContent = 'Focus on your form.';
+        };
+        const tick = () => {
+            if (appState.currentSession.isPaused || !appState.currentSession.isActive) return;
+            const session = appState.currentSession;
+            const now = Date.now();
+            if (session.phase.type === 'stopwatch') {
+                const elapsedTime = now - session.startTime - session.elapsedPauseTime;
+                session.timeLeft = Math.floor(elapsedTime / 1000);
+            } else {
+                const timeLeftInSeconds = Math.round((session.endTime - now) / 1000);
+                if (timeLeftInSeconds <= 0) {
+                    session.timeLeft = 0;
+                    updateTimerDisplay();
+                    endSession(true);
+                    return;
+                }
+                session.timeLeft = timeLeftInSeconds;
+            }
+            updateTimerDisplay();
+        };
+        let currentBreathingPhase = 0;
+        const startBreathingCycle = (pattern) => {
+            if (!appState.currentSession.isActive || appState.currentSession.isPaused) return;
+            const phase = pattern[currentBreathingPhase];
+            sessionInstructions.textContent = phase.phase;
+            const iconElement = sessionIconContainer.querySelector('svg');
+            if (phase.phase.toLowerCase().includes('inhale')) iconElement.style.transform = 'scale(1.2)';
+            else if (phase.phase.toLowerCase().includes('exhale')) iconElement.style.transform = 'scale(0.8)';
+            currentBreathingPhase = (currentBreathingPhase + 1) % pattern.length;
+            breathingCycleTimeoutId = setTimeout(() => startBreathingCycle(pattern), phase.duration * 1000);
+        };
+        const endSession = (completed = false) => {
+            clearInterval(sessionTimer);
+            clearTimeout(breathingCycleTimeoutId);
+            currentBreathingPhase = 0;
+            const iconElement = sessionIconContainer.querySelector('svg');
+            if(iconElement) iconElement.style.transform = 'scale(1)';
+
+            const wasGymSession = appState.currentSession.phase.category === 'Gym';
+            appState.currentSession.isActive = false;
+
+            if (completed) {
+                speak("Well done.");
+                feedbackModal.classList.remove('hidden');
+            } else {
+                const nextScreen = wasGymSession ? 'gym-screen' : 'dashboard-screen';
+                navigateAndRender(nextScreen);
+            }
+        };
+        const togglePauseSession = () => {
+            const session = appState.currentSession;
+            session.isPaused = !session.isPaused;
+            const pauseButton = document.getElementById('pause-session-btn');
+            const now = Date.now();
+            if (session.isPaused) {
+                pauseButton.textContent = 'Resume';
+                pauseButton.classList.replace('bg-sky-700', 'bg-amber-500');
+                pauseButton.classList.replace('hover:bg-sky-600', 'hover:bg-amber-600');
+                session.pauseTime = now;
+                clearTimeout(breathingCycleTimeoutId);
+            } else {
+                pauseButton.textContent = 'Pause';
+                pauseButton.classList.replace('bg-amber-500', 'bg-sky-700');
+                pauseButton.classList.replace('hover:bg-amber-600', 'hover:bg-sky-600');
+                session.elapsedPauseTime += now - session.pauseTime;
+                if (session.phase.type === 'breathing') startBreathingCycle(session.phase.pattern);
+            }
+        };
+        const updateSessionUI = () => {
+            const { phase } = appState.currentSession;
+            document.getElementById('session-phase-title').textContent = phase.parentName || phase.name;
+            document.getElementById('session-exercise-name').textContent = phase.exerciseName || phase.exercise;
+            sessionIconContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">${phase.icon}</svg>`;
+            timerProgressCircle.classList.toggle('animate-stopwatch-spinner', phase.type === 'stopwatch');
+            updateTimerDisplay();
+        };
+        const updateTimerDisplay = () => {
+            const { timeLeft, phase } = appState.currentSession;
+            const displayTime = timeLeft;
+            const minutes = Math.floor(displayTime / 60);
+            const seconds = displayTime % 60;
+            document.getElementById('session-timer').textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            if (phase.type === 'stopwatch') timerProgressCircle.style.strokeDashoffset = '0';
+            else {
+                const progress = (phase.duration - timeLeft) / phase.duration;
+                timerProgressCircle.style.strokeDashoffset = 283 * (1 - progress);
+            }
+        };
+        
+        // --- PROGRESS & ANALYSIS ---
+        let durationChartInstance, consistencyChartInstance, feedbackChartInstance, timeChartInstance, journalInsightChartInstance;
+        const renderProgressScreen = () => {
+            if (appState.progress.history.length === 0) {
+                document.getElementById('progress-content').classList.add('hidden');
+                document.getElementById('progress-empty-state').classList.remove('hidden'); return;
+            }
+            document.getElementById('progress-content').classList.remove('hidden');
+            document.getElementById('progress-empty-state').classList.add('hidden');
+            document.getElementById('stats-total-sessions').textContent = appState.progress.history.length;
+            
+            const uniqueDays = [...new Set(appState.progress.history.map(h => new Date(h.date).setHours(0,0,0,0)))].sort((a,b) => b-a);
+            let streak = 0;
+            if (uniqueDays.length > 0) {
+                const today = new Date().setHours(0,0,0,0);
+                if(uniqueDays[0] === today || uniqueDays[0] === today - 86400000) {
+                    streak = 1;
+                    for (let i = 1; i < uniqueDays.length; i++) { if (uniqueDays[i-1] - uniqueDays[i] === 86400000) streak++; else break; }
+                }
+            }
+            document.getElementById('stats-streak').textContent = `${streak} day${streak !== 1 ? 's' : ''}`;
+            renderCalendar();
+            renderDurationChart();
+        };
+        const renderCalendar = () => {
+            const calendarEl = document.getElementById('calendar');
+            const date = new Date(), year = date.getFullYear(), month = date.getMonth();
+            calendarEl.innerHTML = `<div class="text-center font-bold mb-4">${date.toLocaleString('default', { month: 'long' })} ${year}</div>`;
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-7 gap-1 text-center text-sm';
+            ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(day => grid.innerHTML += `<div class="font-semibold text-slate-500">${day}</div>`);
+            const firstDay = new Date(year, month, 1).getDay();
+            for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+            const workoutDates = new Set(appState.progress.history.map(h => new Date(h.date).toISOString().split('T')[0]));
+            const journalDates = new Set(appState.journal.map(j => new Date(j.id).toISOString().split('T')[0]));
+            for (let day = 1; day <= new Date(year, month + 1, 0).getDate(); day++) {
+                const dayEl = document.createElement('div');
+                dayEl.textContent = day;
+                dayEl.className = 'p-2 rounded-full relative';
+                const dateString = new Date(year, month, day).toISOString().split('T')[0];
+                if (workoutDates.has(dateString)) dayEl.classList.add('bg-sky-500', 'text-white', 'font-bold');
+                if (journalDates.has(dateString)) dayEl.innerHTML += '<div class="calendar-day-dot"></div>';
+                if (day === date.getDate() && month === date.getMonth() && year === date.getFullYear() && !workoutDates.has(dateString)) dayEl.classList.add('ring-2', 'ring-sky-500');
+                grid.appendChild(dayEl);
+            }
+            calendarEl.appendChild(grid);
+        };
+        const renderDurationChart = () => {
+            const ctx = document.getElementById('duration-chart').getContext('2d');
+            if (durationChartInstance) durationChartInstance.destroy();
+            durationChartInstance = new Chart(ctx, { type: 'line', data: { datasets: [{ label: 'Duration (secs)', data: appState.progress.history.map(h => ({ x: h.date, y: h.duration })), borderColor: '#0ea5e9', backgroundColor: 'rgba(14, 165, 233, 0.1)', fill: true, tension: 0.3 }] }, options: { scales: { x: { type: 'time', time: { unit: 'day', tooltipFormat: 'MMM d' } }, y: { beginAtZero: true } } } });
+        };
+        const renderAnalysisScreen = () => {
+             if (appState.progress.history.length < 3) {
+                document.getElementById('analysis-content').classList.add('hidden');
+                document.getElementById('analysis-empty-state').classList.remove('hidden'); return;
+            }
+            document.getElementById('analysis-content').classList.remove('hidden');
+            document.getElementById('analysis-empty-state').classList.add('hidden');
+            renderConsistencyChart();
+            renderFeedbackChart();
+            renderTimeChart();
+            renderTopExercises();
+            renderJournalInsightChart();
+        };
+        const renderConsistencyChart = () => {
+            const ctx = document.getElementById('consistency-chart').getContext('2d');
+            const labels = [], data = [0,0,0,0,0,0,0], today = new Date();
+            for (let i = 6; i >= 0; i--) { const d = new Date(today); d.setDate(today.getDate() - i); labels.push(d.toLocaleDateString('en-US', { weekday: 'short' })); }
+            const last7Days = new Date(today); last7Days.setDate(today.getDate() - 6); last7Days.setHours(0,0,0,0);
+            appState.progress.history.filter(h => new Date(h.date) >= last7Days).forEach(h => { const dayIndex = (new Date(h.date).getDay() - today.getDay() + 6) % 7; data[6 - dayIndex]++; });
+            if (consistencyChartInstance) consistencyChartInstance.destroy();
+            consistencyChartInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'Sessions', data, backgroundColor: '#38bdf8', borderRadius: 4 }] }, options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } } });
+        };
+        const renderFeedbackChart = () => {
+            const ctx = document.getElementById('feedback-chart').getContext('2d');
+            const counts = { great: 0, tired: 0, breathless: 0 };
+            appState.progress.history.forEach(h => { if(h.feedback in counts) counts[h.feedback]++; });
+            if (feedbackChartInstance) feedbackChartInstance.destroy();
+            feedbackChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: ['Great', 'A Little Tired', 'Slightly Breathless'], datasets: [{ data: [counts.great, counts.tired, counts.breathless], backgroundColor: ['#10b981', '#f59e0b', '#ef4444'] }] }, options: { plugins: { legend: { position: 'bottom' } } } });
+        };
+        const renderJournalInsightChart = () => {
+            const ctx = document.getElementById('journal-insight-chart').getContext('2d');
+            const positiveKeywords = ['good', 'great', 'better', 'strong', 'energized', 'well'];
+            const negativeKeywords = ['bad', 'breathless', 'tired', 'difficult', 'wheezy', 'struggled', 'sore'];
+            const insights = {
+                great: { pos: 0, neg: 0 },
+                tired: { pos: 0, neg: 0 },
+                breathless: { pos: 0, neg: 0 },
+            };
+
+            appState.progress.history.forEach(h => {
+                const workoutDate = new Date(h.date).toISOString().split('T')[0];
+                const journalEntry = appState.journal.find(j => new Date(j.id).toISOString().split('T')[0] === workoutDate);
+                if(journalEntry && h.feedback) {
+                    const content = journalEntry.content.toLowerCase();
+                    if (positiveKeywords.some(kw => content.includes(kw))) {
+                        insights[h.feedback].pos++;
+                    }
+                    if (negativeKeywords.some(kw => content.includes(kw))) {
+                        insights[h.feedback].neg++;
+                    }
+                }
+            });
+            
+            if (journalInsightChartInstance) journalInsightChartInstance.destroy();
+            journalInsightChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Felt Great', 'Felt Tired', 'Felt Breathless'],
+                    datasets: [
+                        { label: 'Positive Journal Words', data: [insights.great.pos, insights.tired.pos, insights.breathless.pos], backgroundColor: '#10b981' },
+                        { label: 'Negative Journal Words', data: [insights.great.neg, insights.tired.neg, insights.breathless.neg], backgroundColor: '#ef4444' }
+                    ]
+                },
+                options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { position: 'bottom' } } }
+            });
+        };
+        const renderTimeChart = () => {
+            const ctx = document.getElementById('time-chart').getContext('2d');
+            const counts = { Morning: 0, Afternoon: 0, Evening: 0 };
+            appState.progress.history.forEach(h => { const hour = new Date(h.date).getHours(); if (hour >= 5 && hour < 12) counts.Morning++; else if (hour >= 12 && hour < 18) counts.Afternoon++; else counts.Evening++; });
+             if (timeChartInstance) timeChartInstance.destroy();
+             timeChartInstance = new Chart(ctx, { type: 'bar', data: { labels: ['Morning', 'Afternoon', 'Evening'], datasets: [{ label: 'Sessions', data: [counts.Morning, counts.Afternoon, counts.Evening], backgroundColor: '#38bdf8', borderRadius: 4 }] }, options: { indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } } });
+        };
+        const renderTopExercises = () => {
+            const listEl = document.getElementById('top-exercises-list');
+            const counts = {};
+            appState.progress.history.forEach(h => { counts[h.phaseName] = (counts[h.phaseName] || 0) + 1; });
+            const sorted = Object.entries(counts).sort(([,a],[,b]) => b-a).slice(0,3);
+            listEl.innerHTML = (sorted.length === 0) ? `<li class="text-slate-400 italic">No activities yet.</li>` : '';
+            sorted.forEach(([name, count], index) => { listEl.innerHTML += `<li class="flex justify-between items-center"><span>${index+1}. ${name}</span> <span class="font-bold text-sky-700">${count}</span></li>`; });
+        };
+        
+        // --- EVENT LISTENERS ---
+        const setupEventListeners = () => {
+            navButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    navigateAndRender(btn.dataset.screen);
+                });
+            });
+            phaseSelectionContainer.addEventListener('click', e => {
+                const card = e.target.closest('.phase-card');
+                if (card) {
+                    const phase = progressionMap.beginner.plan[parseInt(card.dataset.phaseIndex)];
+                    startSession(phase);
+                }
+            });
+            gymPlanContainer.addEventListener('click', e => {
+                 const button = e.target.closest('.start-exercise-btn');
+                 if(button) {
+                     const exerciseData = JSON.parse(button.dataset.exercise);
+                     startSession(exerciseData);
+                 }
+            });
+            feedbackModal.addEventListener('click', e => {
+                const button = e.target.closest('.feedback-option');
+                if (button) {
+                    const session = appState.currentSession;
+                    appState.progress.history.push({ 
+                        date: new Date().toISOString(), 
+                        duration: session.timeLeft, 
+                        feedback: button.dataset.feedback, 
+                        phaseName: session.phase.name 
+                    });
+                    saveState();
+                    feedbackModal.classList.add('hidden');
+                    session.isActive = false;
+                    const nextScreen = session.phase.category === 'Gym' ? 'gym-screen' : 'dashboard-screen';
+                    navigateAndRender(nextScreen);
+                    showJournalToast();
+                }
+            });
+            document.getElementById('add-journal-entry-btn').addEventListener('click', () => openJournalModal());
+            document.getElementById('cancel-journal-btn').addEventListener('click', () => journalModal.classList.add('hidden'));
+            journalForm.addEventListener('submit', handleJournalSubmit);
+            document.getElementById('open-rules-btn').addEventListener('click', () => rulesModal.classList.remove('hidden'));
+            document.getElementById('close-rules-btn').addEventListener('click', () => rulesModal.classList.add('hidden'));
+            document.getElementById('end-session-btn').addEventListener('click', () => endSession(false));
+            document.getElementById('pause-session-btn').addEventListener('click', togglePauseSession);
+            document.getElementById('toast-journal-yes').addEventListener('click', () => {
+                openJournalModal(null, "Reflecting on my workout...");
+                toastContainer.classList.add('hidden');
+            });
+            document.getElementById('toast-journal-no').addEventListener('click', () => {
+                toastContainer.classList.add('hidden');
+            });
+        };
+
+        // --- INITIALIZATION ---
+        loadState();
+        setupDashboard();
+        showScreen('dashboard-screen');
+        setupEventListeners();
+    });
+    </script>
+</body>
+</html>
